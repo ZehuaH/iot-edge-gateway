@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package gateway.v1;
+
+option go_package = "iot/proto;gatewaypb";
+
+// 基础遥测上报消息
+message Telemetry {
+  string device_id = 1;              // 设备 ID
+  int64 timestamp_ms = 2;            // 时间戳（毫秒）
+  map<string, double> metrics = 3;   // 指标名称 -> 数值
+  
+  // 客户端本地计算的平均值
+  double client_avg = 4;
+}
+
+// 遥测上报响应
+message TelemetryAck {
+  string status = 1;                 // 简单状态，如 "OK"
+  string message = 2;                // 可选说明
+  
+  // 服务端计算的平均值
+  double server_avg = 3;
+
+  // 回显客户端平均值
+  double client_avg = 4;
+
+  // 差值
+  double diff = 5;
+
+  // 是否在误差范围内
+  bool verified = 6;
+}
+
+// 简单健康检查请求
+message HealthCheckRequest {
+  string message = 1;
+}
+
+// 健康检查响应
+message HealthCheckResponse {
+  string status = 1;
+}
+
+// IoT 边缘网关 gRPC 接口
+service EdgeGatewayService {
+  // 设备上报遥测数据（Unary）
+  rpc PublishTelemetry(Telemetry) returns (TelemetryAck);
+
+  // 网关健康检查（Unary）
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
